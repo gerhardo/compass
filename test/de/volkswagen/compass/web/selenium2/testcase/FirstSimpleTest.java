@@ -18,7 +18,7 @@ public class FirstSimpleTest {
 	
 	@Before
 	public void setup() {
-		myBtn = PageObject.createInstance("selector1",0);
+		myBtn = PageObject.createInstance(0, "selector1", "MenuPanel");
 		PageObject.createInstance("form", "Meine Form").addChild(PageObject.createInstance("panel", "Mein Panel").addChild(myBtn));
 	}
 }
