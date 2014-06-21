@@ -10,6 +10,8 @@ import org.apache.commons.lang.builder.ToStringStyle;
 
 public class PageObject {
 	
+	public static final String DEFAULT_ID_PART_SEPARATOR = ":";
+	
 	/**
 	 * Identifizierung von Elmenten.
 	 *
@@ -18,9 +20,15 @@ public class PageObject {
 
 		/**
 		 * Manipulationen des eigenen {@link Identifier} ermöglichen, wenn das {@link PageObject} in eine Hierarchie eingebunden oder daraus entfernt wird.
-		 * @param parent
+		 * @param parent {@link PageObject}, zu dem dieses als Kind hinzugefügt wurde
 		 */
-		public void connectParent(PageObject parent);
+		public void connectParent(PageObject parent, String idPartSeparator);
+		
+		/**
+		 * Liefert die verkettete ID aller Hierarchiestufen bis zu diesem Element. 
+		 * @return {@link String} mit ID's getrennt durch eine Separator
+		 */
+		public String getIdPath();
 	}
 	
 	/**
@@ -30,29 +38,33 @@ public class PageObject {
 	 */
 	public static final class StringIdentifier implements Identifier {
 		
-		public static final String ID_PART_SEPARATOR = "|";
 		
 		public StringIdentifier(String id) {
 			super();
 			Validate.notEmpty(id);
-			this.id = new StringBuilder(id);
+			this.id = id;
+			this.idPath = id;
 		}
-		private StringBuilder id;
+		private String id;
+		private String idPath;
 
 		
 		public String getId() {
-			return id.toString();
+			return id;
 		}
 		@Override
-		public void connectParent(PageObject parent) {
-			if (parent.getId() instanceof StringIdentifier) {
-				this.id.insert(0, ID_PART_SEPARATOR);
-				this.id.insert(0, parent.getId());
-			}
+		public void connectParent(PageObject parent, String idPartSeparator) {
+			this.idPath = parent.getIdentifier().getIdPath() + idPartSeparator + id;
 		}
+		
+		@Override
+		public String getIdPath() {
+			return idPath;
+		}
+		
 		@Override
 		public String toString() {
-			return id == null ? "<NULL>" : id.toString();
+			return getIdPath();
 		}
 	}
 	
@@ -66,9 +78,11 @@ public class PageObject {
 			super();
 			this.position = position;
 			this.selector = selector;
+			this.idPath = formatAsString();
 		}
 		private int position;
 		private String selector;
+		private String idPath;
 		
 		public int getPosition() {
 			return position;
@@ -78,12 +92,22 @@ public class PageObject {
 			return selector;
 		}
 		@Override
-		public void connectParent(PageObject parent) {
-			// TODO Auto-generated method stub
+		public void connectParent(PageObject parent, String idPartSeparator) {
+			this.idPath = parent.getIdentifier().getIdPath() + idPartSeparator + formatAsString();
 		}
+		
+		@Override
+		public String getIdPath() {
+			return idPath;
+		}
+
 		@Override
 		public String toString() {
-			return String.valueOf(position) + "/" + (selector == null ? "<NULL>" : selector);
+			return getIdPath();
+		}
+		
+		private String formatAsString() {
+			return "[" + String.valueOf(position) + "/" + (selector == null ? "<NULL>" : selector) + "]";
 		}
 	}
 	
@@ -109,6 +133,7 @@ public class PageObject {
 	private Identifier id;
 	private PageObject parent;
 	private String name;
+	private String idPartSeparator = DEFAULT_ID_PART_SEPARATOR;
 	
 	public PageObject addChild(PageObject child) {
 		Validate.notNull(child);
@@ -145,20 +170,24 @@ public class PageObject {
 		return name;
 	}
 	
-	public Identifier getId() {
+	public Identifier getIdentifier() {
 		return id;
 	}
 	
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("name", name).append("id", id).toString();
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("name", name).append("idPath", id.getIdPath()).toString();
 	}
 
 	public void setParent(PageObject parent) {
 		this.parent = parent;
 		if (this.id != null) {
-			this.id.connectParent(parent);
+			this.id.connectParent(parent, idPartSeparator);
 		}
+	}
+
+	public void setIdPartSeparator(String idPartSeparator) {
+		this.idPartSeparator = idPartSeparator;
 	}
 
 
