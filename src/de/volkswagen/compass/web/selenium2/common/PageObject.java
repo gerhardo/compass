@@ -60,7 +60,7 @@ public class PageObject {
 
 		public StringIdentifier(String id) {
 			super();
-			Validate.notEmpty(id);
+			Validate.notEmpty(id, "id may not be empty");
 			this.id = id;
 		}
 
@@ -98,6 +98,8 @@ public class PageObject {
 	public static final class PositionSelectorIdentifier extends BaseIdentifier {
 		public PositionSelectorIdentifier(int position, String selector) {
 			super();
+			Validate.notEmpty(selector, "selector may not be empty");
+			Validate.isTrue(position>=0, "poition must be greater or equal 0");
 			this.position = position;
 			this.selector = selector;
 		}
